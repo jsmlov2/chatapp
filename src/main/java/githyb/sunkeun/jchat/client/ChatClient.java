@@ -30,7 +30,7 @@ public class ChatClient extends JFrame{
 	JTextArea chatArea;
 	JButton logoutButton;
 	
-	ConnectionHandler handler ;
+	ConnectionHandler2 handler ;
 	
 	DefaultListModel<String> chatters;
 	public ChatClient(String ip, int port) throws UnknownHostException, IOException {
@@ -72,12 +72,13 @@ public class ChatClient extends JFrame{
 		String nick = JOptionPane.showInputDialog("nickame");
 		System.out.println("[CLIENT] " + nick);
 		
-		handler = new ConnectionHandler(this, ip, port, nick);
+		handler = new ConnectionHandler2(this, ip, port, nick);
 		
 	}
 	
 	void processLogout() {
 		this.handler.sendLogout();
+		this.exit();
 	}
 
 	/**
@@ -132,6 +133,5 @@ public class ChatClient extends JFrame{
 
 	public void exit() {
 		System.exit(0);//프로세스 죽이기
-		
 	}
 }

@@ -1,14 +1,12 @@
 package githyb.sunkeun.jchat.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.Reader;
 import java.net.Socket;
 import java.util.List;
+
+import githyb.sunkeun.jchat.common.IO;
 
 public class ClientThead extends Thread{
 
@@ -27,28 +25,33 @@ public class ClientThead extends Thread{
 	@Override
 	public void run() {
 	
-		Reader r= new InputStreamReader(this.in); // 023 023 02 -> '감', '자'
-		BufferedReader br = new BufferedReader(r); // 줄바꿈 단위로 문자열을 잘라줌!
+//		Reader r= new InputStreamReader(this.in); // 023 023 02 -> '감', '자'
+//		BufferedReader br = new BufferedReader(r); // 줄바꿈 단위로 문자열을 잘라줌!
 		
 		while ( true) {
-			String line ;
+			String cmd ;
 			try {
-				line = br.readLine(); // LOGIN|NICK.... 
-				String [] params = line.split("\\|"); // LOGIN, mynick
+//				line =  br.readLine(); // LOGIN|NICK....
+//				String [] params = line.split("\\|"); // LOGIN, mynick
+				cmd = IO.readText(in);
+//				String [] params = new String[1];
+//				params[0] = line ;
+				String [] params = {}; /// 일단 오류 안나게 넣음 !
 				
-				if ( "LOGIN".equals(params[0])) {
+				if ( "LOGIN".equals(cmd)) {
 					// 새로운 채팅 참여자
-					String nickName = params[1];
+					String nickName = IO.readText(in);
 					this.nickName = nickName;
 					notifyNewChatter(this);
 					sendChatters();
-				} else if ( "LOGOUT".equals(params[0])) {
+				} else if ( "LOGOUT".equals(cmd)) {
 					break;
-				} else if ( "MSG".equals(params[0])) {
-					String data = params[1];
-					broadcastMsg(nickName, data);	
+				} else if ( "MSG".equals(cmd)) {
+					String msg = IO.readText(in);
+					broadcastMsg(nickName, msg);	
+					//String data = params[1];
 				}else {
-					throw new RuntimeException("알 수 없는 명령어: " + line);
+					throw new RuntimeException("알 수 없는 명령어: " + cmd);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -70,11 +73,18 @@ public class ClientThead extends Thread{
 	}
 	private void sendUserLogout(String nickName2) {
 		// TODO Auto-generated method stub
-		String cmd = "LOGOUT|" + nickName2;
-		PrintWriter pw = new PrintWriter(this.out);
-		pw.println(cmd);
-		pw.flush();
-		
+		try {
+			IO.writeText("LOGOUT", out);
+			IO.writeText(nickName2, out);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+//		String cmd = "LOGOUT|" + nickName2;
+//		PrintWriter pw = new PrintWriter(this.out);
+//		pw.println(cmd);
+//		pw.flush();
+//		
 	}
 	/*
 	 * broadcastXXXX 
@@ -89,10 +99,17 @@ public class ClientThead extends Thread{
      
     void sendMessage (String sender, String msg) {
     	// MSG|sender|mesg
-    	String cmd = "MSG|" + sender +"|" + msg;
-		PrintWriter pw = new PrintWriter(this.out);
-		pw.println(cmd);
-		pw.flush();
+    	try {
+			IO.writeText("MSG", out);
+			IO.writeText(sender, out);
+			IO.writeText(msg, out);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+//    	String cmd = "MSG|" + sender +"|" + msg;
+//		PrintWriter pw = new PrintWriter(this.out);
+//		pw.println(cmd);
+//		pw.flush();
     	
     }
 	protected void notifyNewChatter(ClientThead joiner) {
@@ -107,26 +124,33 @@ public class ClientThead extends Thread{
 		}
 	}
 	void notifyJoiner(String joiner) {
-		String cmd = "JOIN|" + joiner;
-		PrintWriter pw = new PrintWriter(this.out);
-		pw.println(cmd);
-		pw.flush();
+//		String cmd = "JOIN|" + joiner;
+//		PrintWriter pw = new PrintWriter(this.out);
+//		pw.println(cmd);
+//		pw.flush();
+		try {
+			IO.writeText("JOIN", out);
+			IO.writeText(joiner, out);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		
 	}
 	void sendChatters() {
 		List<ClientThead> clients = server.getChatters(); // [ ..., .., ]
-		// CHATTERS|dkdkd,sss,ccc,
-		String cmd = "CHATTERS|";
-		for(int i=0;i<clients.size();i++) {
-			if(i==0) {
-				cmd +=  clients.get(i).nickName ;
-			}else {
-				cmd += "," + clients.get(i).nickName;
-			}
+		String [] nicknames = new String[clients.size()];
+		for (int i = 0; i < nicknames.length; i++) {
+			nicknames[i] = clients.get(i).nickName;
 		}
-		PrintWriter pw = new PrintWriter(this.out);
-		pw.println(cmd);
-		pw.flush();
+		try {
+			IO.writeText("CHATTERS", out);
+			IO.writeTextArray(nicknames, out);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		
 		
