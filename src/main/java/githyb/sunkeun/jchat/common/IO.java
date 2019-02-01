@@ -11,16 +11,17 @@ public class IO {
 	// encoder
 	public static void writeText(String s, OutputStream out) throws IOException {
 		byte [] data = s.getBytes(); // ABCDEF 
+		writeBytes(data, out);
 		// 길이
-		DataOutputStream dos = new DataOutputStream(out);
-		int len = data.length; 
-		// 0..0 0..0 0..0 0..0
-		// 
-		dos.writeInt(len); // 숫자 15를 4byte로 전송
-		// 가나다라마
-		// [61, 62, 63, 64, 65, 66]
-		dos.write(data); // 문자열을 구성하는 숫자들이 전송됨
-		dos.flush();
+//		DataOutputStream dos = new DataOutputStream(out);
+//		int len = data.length; 
+//		// 0..0 0..0 0..0 0..0
+//		// 
+//		dos.writeInt(len); // 숫자 15를 4byte로 전송
+//		// 가나다라마
+//		// [61, 62, 63, 64, 65, 66]
+//		dos.write(data); // 문자열을 구성하는 숫자들이 전송됨
+//		dos.flush();
 	}
 	
 //	public static String readCmd (InputStream in) {
@@ -59,6 +60,28 @@ public class IO {
 			names[i] = readText(din);
 		}
 		return names;
+	}
+
+	public static void writeBytes(byte[] data, OutputStream out) throws IOException {
+
+		DataOutputStream dos = new DataOutputStream(out);
+		dos.writeInt(data.length);
+		dos.write(data);
+		
+		dos.flush();
+	}
+
+	public static byte[] readBytes(InputStream in) {
+		// TODO Auto-generated method stub
+		DataInputStream dis = new DataInputStream(in);
+		try {
+			int len = dis.readInt();
+			byte [] data = new byte[len];
+			dis.readFully(data);
+			return data;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	

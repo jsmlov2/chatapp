@@ -1,10 +1,12 @@
 package githyb.sunkeun.jchat.client;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -84,6 +86,13 @@ public class ConnectionHandler2 {
 						String nickName = IO.readText(in);
 						ui.removeChatter(nickName);
 						// ui.exit();
+					}else if("FILE".equals(params[0])) {
+						String sender = IO.readText(in);
+						String fileName = IO.readText(in);
+						byte [] data = IO.readBytes(in);
+						
+						ui.saveFile(sender, fileName, data);
+						
 					}else {
 						throw new RuntimeException("알 수 없는 명령어: " + cmd);
 					}
@@ -140,5 +149,24 @@ public class ConnectionHandler2 {
 //		PrintWriter pw = new PrintWriter(this.out);
 //		pw.println(cmd);
 //		pw.flush();
+	}
+
+	public void sendFile(File file) {
+		/*
+		 * FILE 
+		 * file name
+		 * byte[]
+		 */
+		try {
+			IO.writeText("FILE", out);
+			IO.writeText(file.getName(), out);
+
+			// 1. 제일 편한 방법
+			byte [] data = Files.readAllBytes(file.toPath());
+			IO.writeBytes(data, out);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 	}
 }

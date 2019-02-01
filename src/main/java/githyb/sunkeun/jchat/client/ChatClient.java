@@ -4,14 +4,21 @@ import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -68,14 +75,52 @@ public class ChatClient extends JFrame{
 		
 		root.add(chatList, BorderLayout.EAST);
 		
+		intallMenu();
 		// 입력 다이얼로그
 		String nick = JOptionPane.showInputDialog("nickame");
+//		String nick = "abvc";
 		System.out.println("[CLIENT] " + nick);
 		
 		handler = new ConnectionHandler2(this, ip, port, nick);
 		
 	}
 	
+	void intallMenu() {
+		JMenuBar bar = new JMenuBar();
+		{
+			JMenu file = new JMenu("File");
+			JMenuItem upload = new JMenuItem("Upload");
+			upload.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					processFileUpload();
+				}
+			});
+			file.add(upload);
+			bar.add(file);
+		}
+		
+		this.setJMenuBar(bar);
+		
+	}
+	/**
+	 * 파일을 선택해서 업로드 합니다.
+	 */
+	void processFileUpload() {
+		JFileChooser chooser = new JFileChooser(new File("."));
+		int mode = chooser.showOpenDialog(this);
+		if ( mode != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		
+		File selectedFile = chooser.getSelectedFile(); // 내가 선택한 파일을 가져올 수 잇음!
+		System.out.println(selectedFile.getAbsolutePath());
+		/*
+		 * 파일 내용을 바이트로 읽어들여서 소켓 out 스트림으로 보내면 됨
+		 */
+		handler.sendFile(selectedFile);
+	}
+
 	void processLogout() {
 		this.handler.sendLogout();
 		this.exit();
@@ -133,5 +178,43 @@ public class ChatClient extends JFrame{
 
 	public void exit() {
 		System.exit(0);//프로세스 죽이기
+	}
+
+	/**
+	 * 파일을 저장합니다.
+	 * @param sender
+	 * @param fileName
+	 * @param data
+	 */
+	public void saveFile(String sender, String fileName, byte[] data) {
+		JFileChooser chooser = new JFileChooser(new File("."));
+		chooser.setSelectedFile(new File(fileName));
+		int mode = chooser.showSaveDialog(this);
+		if ( mode == JFileChooser.APPROVE_OPTION) {
+			/*
+			 * File :잘못 만든 이름! 경로입니다. 이 위ㅣ에 파일이 있을 수도 있고, 없을 수도 있음!
+			 */
+			File saveTo = chooser.getSelectedFile();
+			System.out.println(sender + " : " + fileName );
+			System.out.println(saveTo.getAbsolutePath());
+			System.out.println(saveTo.exists());
+			
+			try {
+				if(!saveTo.exists()) {
+					// 파일 디스크에 만들어주세요 
+					saveTo.createNewFile();
+				}
+				Files.write(
+						saveTo.toPath(), 
+						data, 
+						StandardOpenOption.TRUNCATE_EXISTING);//기존 파일 존재시 새로 만들기
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		// TODO Auto-generated method stub
+		
 	}
 }

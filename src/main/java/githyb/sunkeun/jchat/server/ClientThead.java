@@ -50,7 +50,11 @@ public class ClientThead extends Thread{
 					String msg = IO.readText(in);
 					broadcastMsg(nickName, msg);	
 					//String data = params[1];
-				}else {
+				} else if( "FILE".equals(cmd)) {
+					String file = IO.readText(in); //file 이름
+					byte [] data = IO.readBytes(in);
+					broadcastFile(this.nickName, file, data);
+				} else{
 					throw new RuntimeException("알 수 없는 명령어: " + cmd);
 				}
 			} catch (IOException e) {
@@ -61,6 +65,35 @@ public class ClientThead extends Thread{
 		
 		server.removeClient(this);
 		broadCastUser(nickName);
+		
+	}
+	void broadcastFile(String sender, String fileName, byte[] data) {
+		
+		List<ClientThead> clients = server.getChatters();
+		for (ClientThead clientThead : clients) {
+			if ( clientThead.nickName.equals(sender)) {
+				continue;
+			}
+			clientThead.sendFile(sender, fileName, data);
+		}
+	}
+	void sendFile(String sender, String fileName, byte[] data) {
+		/*
+		 * File
+		 * sender
+		 * filename
+		 * data.....
+		 * 
+		 */
+		try {
+			IO.writeText("FILE", out);
+			IO.writeText(sender, out);
+			IO.writeText(fileName, out);
+			IO.writeBytes(data, out);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		
 	}
 	private void broadCastUser(String nickName2) {
